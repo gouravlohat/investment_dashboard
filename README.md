@@ -80,7 +80,10 @@ Live / Reconnecting / Offline are actually different states, not just three labe
 - Reconnecting - socket dropped but you still have internet, retry is queued
 - Offline - no internet at all, checked separately from the socket
 
-Dev and QA have a bolt icon in the header to kill the connection on demand, so you can see the whole reconnect cycle without needing airplane mode. (Still need to screenshot this for the submission.)
+Dev and QA have a bolt icon in the header to kill the connection on demand, so you can see the whole reconnect cycle without needing airplane mode. Live, with the bolt armed, on the left; mid-reconnect with the toast + retry button on the right (it flips back to a "Back online" toast the same way once the socket recovers):
+
+<img src="docs/screenshots/reconnect-1-live-debug-button.png" width="49%"> <img src="docs/screenshots/reconnect-2-reconnecting-toast.png" width="49%">
+
 
 ## Rebuilds
 
@@ -92,7 +95,11 @@ On top of that, every row and every ticker chip grabs its own quote individually
 
 End result: one tick, one row updates. Summary cards are the exception - they use the whole quotes map since total value changes every tick, so they just rebuild every time on purpose.
 
-(Also still need a DevTools screenshot with "track widget rebuilds" on to actually show this.)
+Proof, straight from DevTools' Performance → Rebuild Stats panel while the feed was ticking — widgets like `TickerStrip`, `PerformanceChart`, individual `SizedBox`/`Text` cells show real counts, and nothing from `HoldingsTable` or `Scaffold` shows up rebuilding on every tick:
+
+![DevTools rebuild stats](docs/screenshots/devtools-rebuild-stats-1.png)
+![DevTools rebuild stats continued](docs/screenshots/devtools-rebuild-stats-2.png)
+![DevTools rebuild stats, more widgets](docs/screenshots/devtools-rebuild-stats-3.png)
 
 ## Ticks don't interrupt you
 
@@ -110,11 +117,9 @@ Small note on prod: finnhub gives raw trade prices, not a ready % change. There'
 
 iOS flavors are the real thing, not just a Dart-level trick - actual Xcode schemes with their own build configs and bundle ids. Tested with `flutter build ios --flavor dev --simulator` and `--flavor prod --simulator`, both come out right.
 
-## Still need to do (can't do these myself)
+## Chart tooltip
 
-- [ ] DevTools screenshot showing only isolated cells rebuilding
-- [ ] Screenshot/GIF of the disconnect → reconnect flow
-- [ ] Screenshot of the chart tooltip
+![Chart tooltip](docs/screenshots/chart-tooltip.png)
 
 ## Firebase App Distribution
 

@@ -46,3 +46,6 @@ app.*.map.json
 
 # Firebase CLI local deploy cache
 .firebase/
+
+# Local DevTools preferences
+devtools_options.yaml
