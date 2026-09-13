@@ -1,0 +1,61 @@
+import 'dart:async';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../core/utils/result.dart';
+import '../../domain/entities/quote.dart';
+import '../../domain/repositories/portfolio_repository.dart';
+import '../../domain/usecases/update_target_price_alert.dart';
+import '../../domain/usecases/watch_live_quotes.dart';
+import 'portfolio_state.dart';
+
+/// Source-of-truth cubit for holdings + live quotes. Deliberately does NOT
+/// own search/sort/scroll UI state (see [HoldingsUiCubit]) so a price tick
+/// here never has a chance to reset the user's in-progress interaction.
+class PortfolioCubit extends Cubit<PortfolioState> {
+  final PortfolioRepository _repository;
+  final WatchLiveQuotes _watchLiveQuotes;
+  final UpdateTargetPriceAlert _updateTargetPriceAlert;
+
+  StreamSubscription<Quote>? _quoteSub;
+
+  PortfolioCubit(this._repository, this._watchLiveQuotes, this._updateTargetPriceAlert)
+      : super(PortfolioState.initial()) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    final holdings = _repository.getHoldings();
+    final history = _repository.getHistory();
+    emit(state.copyWith(
+      status: PortfolioStatus.ready,
+      holdings: holdings,
+      history: history,
+    ));
+
+    await _repository.connectFeed(holdings.map((h) => h.symbol).toList());
+    _quoteSub = _watchLiveQuotes().listen((quote) {
+      final updatedQuotes = Map<String, Quote>.from(state.quotes);
+      updatedQuotes[quote.symbol] = quote;
+      emit(state.copyWith(quotes: updatedQuotes));
+    });
+  }
+
+  /// Snapshot-and-diff happens in the editor widget; by the time this is
+  /// called we already know the value changed, so we always send.
+  Future<void> updateTargetPriceAlert(String symbol, double? newValue) async {
+    final result = await _updateTargetPriceAlert(symbol, newValue);
+    if (result is Success<void>) {
+      final updatedHoldings = state.holdings
+          .map((h) => h.symbol == symbol ? h.withTargetPriceAlert(newValue) : h)
+          .toList();
+      emit(state.copyWith(holdings: updatedHoldings));
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _quoteSub?.cancel();
+    return super.close();
+  }
+}

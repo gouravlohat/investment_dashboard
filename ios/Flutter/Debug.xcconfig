@@ -1,0 +1,5 @@
+#include "Generated.xcconfig"
+
+// Default (no --flavor) build display name — matches lib/main.dart, which
+// delegates to the Dev flavor so a plain `flutter run` still works.
+APP_DISPLAY_NAME = Portfolio Dev
