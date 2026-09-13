@@ -22,8 +22,9 @@ class SummaryFilters extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = context.select<HoldingsUiCubit, SummaryFilter>((c) => c.state.activeFilter);
 
+    final theme = Theme.of(context);
     return SizedBox(
-      height: 36,
+      height: 38,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: SummaryFilter.values.length,
@@ -34,6 +35,10 @@ class SummaryFilters extends StatelessWidget {
           return ChoiceChip(
             label: Text(_labels[filter]!),
             selected: selected,
+            showCheckmark: false,
+            labelStyle: theme.textTheme.labelLarge?.copyWith(
+              color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
+            ),
             onSelected: (_) => context.read<HoldingsUiCubit>().setFilter(filter),
           );
         },

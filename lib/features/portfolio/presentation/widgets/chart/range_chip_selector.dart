@@ -9,13 +9,19 @@ class RangeChipSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = context.watch<ChartRangeCubit>().state;
+    final theme = Theme.of(context);
 
     return Wrap(
       spacing: 8,
       children: ChartRange.values.map((range) {
+        final isSelected = range == selected;
         return ChoiceChip(
           label: Text(range.label),
-          selected: range == selected,
+          selected: isSelected,
+          showCheckmark: false,
+          labelStyle: theme.textTheme.labelLarge?.copyWith(
+            color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
+          ),
           onSelected: (_) => context.read<ChartRangeCubit>().select(range),
         );
       }).toList(),

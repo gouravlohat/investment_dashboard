@@ -47,7 +47,6 @@ class _HoldingsSearchBarState extends State<HoldingsSearchBar> {
                 },
               ),
         isDense: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       onChanged: (value) {
         context.read<HoldingsUiCubit>().setSearchQuery(value);

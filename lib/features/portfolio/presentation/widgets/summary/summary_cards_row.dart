@@ -44,7 +44,7 @@ class SummaryCardsRow extends StatelessWidget {
         crossAxisCount: columns,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        mainAxisExtent: 128,
+        mainAxisExtent: 132,
       ),
       children: [
         SummaryCard(
@@ -62,6 +62,7 @@ class SummaryCardsRow extends StatelessWidget {
           value: Formatters.currency(pl),
           subtitle: Formatters.percent(plPercent),
           valueColor: plColor,
+          trendUp: pl >= 0,
           icon: Icons.trending_up,
         ),
         SummaryCard(
@@ -69,6 +70,7 @@ class SummaryCardsRow extends StatelessWidget {
           value: Formatters.currency(todaysChange),
           subtitle: Formatters.percent(todaysChangePercent),
           valueColor: todaysColor,
+          trendUp: todaysChange >= 0,
           icon: Icons.show_chart,
         ),
       ],

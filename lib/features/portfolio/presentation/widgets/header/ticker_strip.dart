@@ -21,16 +21,16 @@ class TickerStrip extends StatelessWidget {
     final holdings = context.select<PortfolioCubit, List<Holding>>((c) => c.state.holdings);
 
     if (holdings.isEmpty) {
-      return const SizedBox(height: 40);
+      return const SizedBox(height: 42);
     }
 
     return SizedBox(
-      height: 40,
+      height: 42,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: holdings.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) => _TickerChip(symbol: holdings[index].symbol),
       ),
     );
@@ -53,8 +53,9 @@ class _TickerChip extends StatelessWidget {
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: FlashOnChange<Quote?>(
         value: quote,
@@ -62,17 +63,27 @@ class _TickerChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(symbol, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            Text(
+              symbol,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.1),
+            ),
             const SizedBox(width: 6),
             Text(
               quote == null ? '—' : Formatters.currency(quote.price),
-              style: TextStyle(fontSize: 12, color: color),
+              style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
             ),
-            const SizedBox(width: 4),
-            Text(
-              quote == null ? '' : Formatters.percent(quote.changePercent),
-              style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
-            ),
+            if (quote != null) ...[
+              const SizedBox(width: 3),
+              Icon(
+                quote.isUp ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
+                size: 15,
+                color: color,
+              ),
+              Text(
+                Formatters.percent(quote.changePercent),
+                style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w700),
+              ),
+            ],
           ],
         ),
       ),

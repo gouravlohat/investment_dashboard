@@ -22,12 +22,21 @@ class HoldingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          shape: const RoundedRectangleBorder(side: BorderSide.none),
+          collapsedShape: const RoundedRectangleBorder(side: BorderSide.none),
           title: LayoutBuilder(
             builder: (context, constraints) {
               return constraints.maxWidth < 420
@@ -37,6 +46,35 @@ class HoldingRow extends StatelessWidget {
           ),
           children: [HoldingRowEditor(holding: holding)],
         ),
+      ),
+    );
+  }
+}
+
+/// Small circular badge with the holding's ticker initials — purely
+/// decorative, gives each row a visual anchor at a glance.
+class _SymbolAvatar extends StatelessWidget {
+  final String symbol;
+
+  const _SymbolAvatar({required this.symbol});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hue = (symbol.hashCode.abs() % 360).toDouble();
+    final color = HSLColor.fromAHSL(1, hue, 0.55, theme.brightness == Brightness.dark ? 0.55 : 0.42).toColor();
+    final initials = symbol.length >= 2 ? symbol.substring(0, 2) : symbol;
+    return Container(
+      width: 34,
+      height: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        initials,
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color, letterSpacing: -0.2),
       ),
     );
   }
@@ -54,15 +92,23 @@ class _WideRow extends StatelessWidget {
       children: [
         Expanded(
           flex: 3,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             children: [
-              Text(holding.symbol, style: const TextStyle(fontWeight: FontWeight.w700)),
-              Text(
-                holding.companyName,
-                style: Theme.of(context).textTheme.bodySmall,
-                overflow: TextOverflow.ellipsis,
+              _SymbolAvatar(symbol: holding.symbol),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(holding.symbol, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    Text(
+                      holding.companyName,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -73,7 +119,7 @@ class _WideRow extends StatelessWidget {
           child: Text(Formatters.currency(holding.avgBuyPrice), textAlign: TextAlign.end),
         ),
         Expanded(flex: 2, child: _LivePriceCell(symbol: holding.symbol)),
-        Expanded(flex: 2, child: _LivePlCell(holding: holding)),
+        Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: _LivePlCell(holding: holding))),
       ],
     );
   }
@@ -89,30 +135,39 @@ class _CompactRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(holding.symbol, style: const TextStyle(fontWeight: FontWeight.w700)),
-            ),
-            _LivePriceCell(symbol: holding.symbol),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                '${holding.companyName} · ${holding.quantity.toStringAsFixed(0)} @ ${Formatters.currency(holding.avgBuyPrice)}',
-                style: theme.textTheme.bodySmall,
-                overflow: TextOverflow.ellipsis,
+        _SymbolAvatar(symbol: holding.symbol),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(holding.symbol, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  ),
+                  _LivePriceCell(symbol: holding.symbol),
+                ],
               ),
-            ),
-            _LivePlCell(holding: holding),
-          ],
+              const SizedBox(height: 3),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${holding.companyName} · ${holding.quantity.toStringAsFixed(0)} @ ${Formatters.currency(holding.avgBuyPrice)}',
+                      style: theme.textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  _LivePlCell(holding: holding),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -133,10 +188,11 @@ class _LivePriceCell extends StatelessWidget {
       value: quote,
       flashColor: (quote?.isUp ?? true) ? semantic.gain : semantic.loss,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         child: Text(
           quote == null ? '—' : Formatters.currency(quote.price),
           textAlign: TextAlign.end,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -159,12 +215,16 @@ class _LivePlCell extends StatelessWidget {
     return FlashOnChange<Quote?>(
       value: quote,
       flashColor: color,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+        ),
         child: Text(
           Formatters.currency(pl),
           textAlign: TextAlign.end,
-          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12.5),
         ),
       ),
     );

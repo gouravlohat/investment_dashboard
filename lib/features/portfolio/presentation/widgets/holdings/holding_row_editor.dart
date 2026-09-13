@@ -103,7 +103,6 @@ class _HoldingRowEditorState extends State<HoldingRowEditor> {
                 labelText: 'Target price alert (₹)',
                 isDense: true,
                 helperText: _lastSavedMessage,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onChanged: (_) {
                 if (_lastSavedMessage != null) setState(() => _lastSavedMessage = null);

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/network/websocket/connection_status.dart';
-import '../../../../core/utils/breakpoints.dart';
 import '../cubit/connection_cubit.dart';
 import '../cubit/connection_state.dart';
 import '../cubit/portfolio_cubit.dart';
@@ -29,7 +28,16 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTablet = Breakpoints.isTablet(context);
+    final width = MediaQuery.sizeOf(context).width;
+    // Padding scales with the window instead of capping content at a fixed
+    // max width, so the dashboard actually fills large/desktop screens
+    // rather than floating in a narrow column with empty space either side.
+    final horizontalPadding = switch (width) {
+      < 600 => 16.0,
+      < 1000 => 24.0,
+      < 1600 => width * 0.035,
+      _ => width * 0.06,
+    };
 
     return BlocListener<ConnectionCubit, ConnectionUiState>(
       listenWhen: (previous, current) => previous.status != current.status,
@@ -70,28 +78,23 @@ class DashboardPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           return SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isTablet ? 24 : 16,
-                    vertical: 16,
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SummaryCardsRow(),
-                      SizedBox(height: 14),
-                      SummaryFilters(),
-                      SizedBox(height: 24),
-                      _PerformanceChartCard(),
-                      SizedBox(height: 24),
-                      _HoldingsSection(),
-                      SizedBox(height: 24),
-                    ],
-                  ),
-                ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 16,
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SummaryCardsRow(),
+                  SizedBox(height: 14),
+                  SummaryFilters(),
+                  SizedBox(height: 24),
+                  _PerformanceChartCard(),
+                  SizedBox(height: 24),
+                  _HoldingsSection(),
+                  SizedBox(height: 24),
+                ],
               ),
             ),
           );

@@ -13,7 +13,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   const AppHeader({super.key, required this.config});
 
   @override
-  Size get preferredSize => const Size.fromHeight(56 + 40 + 8);
+  Size get preferredSize => const Size.fromHeight(56 + 42 + 17);
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +54,16 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
         const ThemeToggleButton(),
         const SizedBox(width: 8),
       ],
-      bottom: const PreferredSize(
-        preferredSize: Size.fromHeight(48),
-        child: Padding(
-          padding: EdgeInsets.only(bottom: 8),
-          child: TickerStrip(),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(59),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.4)),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: const TickerStrip(),
         ),
       ),
     );
@@ -72,18 +77,21 @@ class _EnvChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
+        color: primary.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: primary.withValues(alpha: 0.25)),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.3,
+          color: primary,
         ),
       ),
     );
