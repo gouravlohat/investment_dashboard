@@ -43,14 +43,25 @@ class PortfolioCubit extends Cubit<PortfolioState> {
 
   /// Snapshot-and-diff happens in the editor widget; by the time this is
   /// called we already know the value changed, so we always send.
-  Future<void> updateTargetPriceAlert(String symbol, double? newValue) async {
+  ///
+  /// Optimistic UI: the new value is applied to state immediately, before
+  /// the (simulated) network call resolves, so the row updates instantly.
+  /// If the call comes back a [Failure], the holding is rolled back to
+  /// whatever it was before this call. Returns whether it ended up
+  /// succeeding, so the editor can tell the user if it got reverted.
+  Future<bool> updateTargetPriceAlert(String symbol, double? newValue) async {
+    final previousHoldings = state.holdings;
+    final optimisticHoldings = state.holdings
+        .map((h) => h.symbol == symbol ? h.withTargetPriceAlert(newValue) : h)
+        .toList();
+    emit(state.copyWith(holdings: optimisticHoldings));
+
     final result = await _updateTargetPriceAlert(symbol, newValue);
-    if (result is Success<void>) {
-      final updatedHoldings = state.holdings
-          .map((h) => h.symbol == symbol ? h.withTargetPriceAlert(newValue) : h)
-          .toList();
-      emit(state.copyWith(holdings: updatedHoldings));
+    if (result is Failure<void>) {
+      emit(state.copyWith(holdings: previousHoldings));
+      return false;
     }
+    return true;
   }
 
   @override

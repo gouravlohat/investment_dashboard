@@ -8,13 +8,6 @@ import 'raw_quote_tick.dart';
 import 'reconnect_policy.dart';
 import 'websocket_client.dart';
 
-/// Used by the Prod flavor. Connects to Finnhub's real trade WebSocket
-/// (wss://ws.finnhub.io) and subscribes to the portfolio's symbols.
-///
-/// Finnhub's trade stream gives raw executed-trade prices, not a
-/// pre-computed change%. Since this assignment has no backend to fetch a
-/// prior close from, change% is computed relative to the first trade price
-/// observed for that symbol in the current session (documented in README).
 class FinnhubWebsocketClient implements WebsocketClient {
   final String apiKey;
   final ReconnectPolicy _reconnectPolicy;
@@ -27,6 +20,7 @@ class FinnhubWebsocketClient implements WebsocketClient {
   Timer? _reconnectTimer;
   int _reconnectAttempt = 0;
   bool _manuallyDisconnected = false;
+  bool _connected = false;
   List<String> _symbols = [];
   final Map<String, double> _basePrice = {};
 
@@ -63,6 +57,7 @@ class FinnhubWebsocketClient implements WebsocketClient {
         _channel!.sink.add(jsonEncode({'type': 'subscribe', 'symbol': symbol}));
       }
       _reconnectAttempt = 0;
+      _connected = true;
       _statusController.add(ConnectionStatus.live);
     } catch (_) {
       _handleDrop();
@@ -91,6 +86,7 @@ class FinnhubWebsocketClient implements WebsocketClient {
   }
 
   void _handleDrop() {
+    _connected = false;
     if (_manuallyDisconnected) return;
     _subscription?.cancel();
     _statusController.add(ConnectionStatus.reconnecting);
@@ -109,8 +105,16 @@ class FinnhubWebsocketClient implements WebsocketClient {
   }
 
   @override
+  void retryNow() {
+    if (_connected) return;
+    _reconnectTimer?.cancel();
+    _openSocket();
+  }
+
+  @override
   Future<void> disconnect() async {
     _manuallyDisconnected = true;
+    _connected = false;
     _reconnectTimer?.cancel();
     await _subscription?.cancel();
     await _channel?.sink.close();

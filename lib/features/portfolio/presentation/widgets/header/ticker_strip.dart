@@ -6,6 +6,7 @@ import '../../../../../core/utils/formatters.dart';
 import '../../../domain/entities/holding.dart';
 import '../../../domain/entities/quote.dart';
 import '../../cubit/portfolio_cubit.dart';
+import '../common/flash_on_change.dart';
 
 /// Horizontal live ticker strip. Selects `state.holdings` (which keeps the
 /// same List instance across price ticks — only `quotes` changes) so this
@@ -55,21 +56,25 @@ class _TickerChip extends StatelessWidget {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(symbol, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-          const SizedBox(width: 6),
-          Text(
-            quote == null ? '—' : Formatters.currency(quote.price),
-            style: TextStyle(fontSize: 12, color: color),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            quote == null ? '' : Formatters.percent(quote.changePercent),
-            style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
-          ),
-        ],
+      child: FlashOnChange<Quote?>(
+        value: quote,
+        flashColor: color,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(symbol, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            const SizedBox(width: 6),
+            Text(
+              quote == null ? '—' : Formatters.currency(quote.price),
+              style: TextStyle(fontSize: 12, color: color),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              quote == null ? '' : Formatters.percent(quote.changePercent),
+              style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }

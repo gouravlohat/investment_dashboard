@@ -19,6 +19,10 @@ abstract class PortfolioRepository {
 
   void debugKillConnection();
 
+  /// User-triggered "retry now" from the disconnect toast — bypasses the
+  /// current backoff wait.
+  void retryNow();
+
   /// Simulates a partial-update API call. Only ever invoked when the
   /// caller has already diffed the value against its original snapshot.
   Future<Result<void>> updateTargetPriceAlert(String symbol, double? value);

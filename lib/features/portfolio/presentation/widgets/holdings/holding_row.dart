@@ -7,6 +7,7 @@ import '../../../domain/entities/holding.dart';
 import '../../../domain/entities/quote.dart';
 import '../../../domain/portfolio_calculator.dart';
 import '../../cubit/portfolio_cubit.dart';
+import '../common/flash_on_change.dart';
 import 'holding_row_editor.dart';
 
 /// One holdings-table row. Static cells (symbol/company/qty/avg buy) come
@@ -126,9 +127,18 @@ class _LivePriceCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final quote = context.select<PortfolioCubit, Quote?>((c) => c.state.quotes[symbol]);
-    return Text(
-      quote == null ? '—' : Formatters.currency(quote.price),
-      textAlign: TextAlign.end,
+    final theme = Theme.of(context);
+    final semantic = theme.brightness == Brightness.dark ? AppSemanticColors.dark : AppSemanticColors.light;
+    return FlashOnChange<Quote?>(
+      value: quote,
+      flashColor: (quote?.isUp ?? true) ? semantic.gain : semantic.loss,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Text(
+          quote == null ? '—' : Formatters.currency(quote.price),
+          textAlign: TextAlign.end,
+        ),
+      ),
     );
   }
 }
@@ -146,10 +156,17 @@ class _LivePlCell extends StatelessWidget {
     final theme = Theme.of(context);
     final semantic = theme.brightness == Brightness.dark ? AppSemanticColors.dark : AppSemanticColors.light;
     final color = pl >= 0 ? semantic.gain : semantic.loss;
-    return Text(
-      Formatters.currency(pl),
-      textAlign: TextAlign.end,
-      style: TextStyle(color: color, fontWeight: FontWeight.w600),
+    return FlashOnChange<Quote?>(
+      value: quote,
+      flashColor: color,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Text(
+          Formatters.currency(pl),
+          textAlign: TextAlign.end,
+          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 }

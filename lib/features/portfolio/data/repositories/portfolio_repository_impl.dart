@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../../../../core/network/websocket/connection_status.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/holding.dart';
@@ -10,6 +12,7 @@ import '../datasources/stock_price_remote_datasource.dart';
 class PortfolioRepositoryImpl implements PortfolioRepository {
   final PortfolioLocalDataSource _localDataSource;
   final StockPriceRemoteDataSource _remoteDataSource;
+  final Random _random = Random();
 
   PortfolioRepositoryImpl(this._localDataSource, this._remoteDataSource);
 
@@ -37,10 +40,18 @@ class PortfolioRepositoryImpl implements PortfolioRepository {
   void debugKillConnection() => _remoteDataSource.debugKillConnection();
 
   @override
+  void retryNow() => _remoteDataSource.retryNow();
+
+  @override
   Future<Result<void>> updateTargetPriceAlert(String symbol, double? value) async {
     // No backend: simulate a partial-update API round trip so the
     // snapshot-and-diff / optimistic-UI plumbing has something real to do.
+    // A ~15% simulated failure rate exercises the rollback path in the
+    // running app instead of only in unit tests.
     await Future.delayed(const Duration(milliseconds: 400));
+    if (_random.nextDouble() < 0.15) {
+      return const Failure('Network error — please try again.');
+    }
     return const Success(null);
   }
 }

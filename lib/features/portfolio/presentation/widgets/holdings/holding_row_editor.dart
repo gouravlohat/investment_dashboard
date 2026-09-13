@@ -15,6 +15,11 @@ import '../../cubit/portfolio_cubit.dart';
 /// (only `read`s it to dispatch the update), a live price tick elsewhere
 /// can never rebuild it or touch its `TextEditingController`, so an
 /// in-progress unsaved edit is never overwritten.
+///
+/// Save is optimistic: `PortfolioCubit` applies the new value to state
+/// immediately, before the (simulated) network call resolves. If that call
+/// fails, the cubit rolls the holding back and this widget just reports
+/// it — the text the user typed is left alone so they can retry.
 class HoldingRowEditor extends StatefulWidget {
   final Holding holding;
 
@@ -54,18 +59,31 @@ class _HoldingRowEditorState extends State<HoldingRowEditor> {
       return;
     }
 
+    final previousSnapshot = _snapshot;
     setState(() {
       _saving = true;
       _lastSavedMessage = null;
+      // Applied optimistically in the cubit already — reflect that here
+      // too so a re-tap of Save before the network call resolves is
+      // correctly treated as "no change".
+      _snapshot = parsed;
     });
 
-    await context.read<PortfolioCubit>().updateTargetPriceAlert(widget.holding.symbol, parsed);
+    final succeeded = await context
+        .read<PortfolioCubit>()
+        .updateTargetPriceAlert(widget.holding.symbol, parsed);
 
     if (!mounted) return;
     setState(() {
       _saving = false;
-      _snapshot = parsed;
-      _lastSavedMessage = 'Saved';
+      if (succeeded) {
+        _lastSavedMessage = 'Saved';
+      } else {
+        // Cubit already rolled the holding back — undo our optimistic
+        // snapshot too, but leave the typed text so Save can be retried.
+        _snapshot = previousSnapshot;
+        _lastSavedMessage = 'Failed to save — tap Save to retry';
+      }
     });
   }
 

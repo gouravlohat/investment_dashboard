@@ -51,13 +51,31 @@ void main() {
   );
 
   blocTest<PortfolioCubit, PortfolioState>(
-    'updateTargetPriceAlert updates only the targeted holding',
+    'updateTargetPriceAlert applies optimistically and keeps the value on success',
     build: buildCubit,
     wait: const Duration(milliseconds: 20),
     act: (cubit) => cubit.updateTargetPriceAlert('AAPL', 199.99),
     verify: (cubit) {
       final updated = cubit.state.holdings.firstWhere((h) => h.symbol == 'AAPL');
       expect(updated.targetPriceAlert, 199.99);
+    },
+  );
+
+  blocTest<PortfolioCubit, PortfolioState>(
+    'updateTargetPriceAlert applies optimistically then rolls back on failure',
+    setUp: () {
+      when(() => repository.updateTargetPriceAlert(any(), any()))
+          .thenAnswer((_) async => const Failure('boom'));
+    },
+    build: buildCubit,
+    wait: const Duration(milliseconds: 20),
+    act: (cubit) async {
+      final succeeded = await cubit.updateTargetPriceAlert('AAPL', 199.99);
+      expect(succeeded, isFalse);
+    },
+    verify: (cubit) {
+      final holding = cubit.state.holdings.firstWhere((h) => h.symbol == 'AAPL');
+      expect(holding.targetPriceAlert, isNull, reason: 'should roll back to the pre-edit value');
     },
   );
 }

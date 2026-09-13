@@ -2,6 +2,8 @@
 
 Live investment dashboard built for the Mindorigin Flutter assignment. Mock holdings, live prices over a WebSocket, a performance chart, and a reconnect flow that actually works instead of just showing a spinner.
 
+Live demo (web build, dev flavor): **https://investmentdasgboard.web.app**
+
 ## Running it
 
 ```bash
@@ -128,6 +130,17 @@ firebase appdistribution:distribute \
 ```
 
 No testers group existed yet so it uploaded with nobody attached. Make a group in the Firebase console (App Distribution → Testers & Groups) and rerun that last command, or swap `--groups` for `--testers "someone@email.com"` for a one-off.
+
+## Bonus stuff I added
+
+- **Price flash animation** - the price and P/L cells flash green/red for a moment whenever they update, then fade back. `FlashOnChange` widget, wraps the ticker chips and the holdings row cells.
+- **Optimistic UI on the target price alert edit** - the value applies to state right away on Save, doesn't wait for the network call. If the (simulated) call fails, it rolls back and tells you to retry. Simulated a ~15% random failure rate on that call just so the rollback path actually happens sometimes instead of only existing in a unit test.
+- **Retry button on disconnect** - when the connection drops or you go offline, there's a toast with a Retry button that skips the rest of the backoff wait and reconnects immediately.
+- **Live web build** - deployed to Firebase Hosting, link at the top of this file. To redeploy:
+  ```bash
+  flutter build web -t lib/main_dev.dart --dart-define=FLAVOR=dev
+  firebase deploy --only hosting
+  ```
 
 ## Tests
 

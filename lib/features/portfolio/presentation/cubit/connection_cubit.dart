@@ -47,6 +47,10 @@ class ConnectionCubit extends Cubit<ConnectionUiState> {
   /// dropped socket without needing airplane mode.
   void debugKillConnection() => _repository.debugKillConnection();
 
+  /// "Retry now" action on the disconnect toast — skips the rest of the
+  /// current backoff wait.
+  void retryNow() => _repository.retryNow();
+
   @override
   Future<void> close() {
     _socketSub?.cancel();

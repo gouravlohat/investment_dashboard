@@ -103,15 +103,24 @@ class SimulatedWebsocketClient implements WebsocketClient {
   void _scheduleReconnect() {
     _reconnectAttempt++;
     final delay = _reconnectPolicy.delayFor(_reconnectAttempt);
-    _reconnectTimer = Timer(delay, () {
-      _connected = true;
-      _reconnectAttempt = 0;
-      _statusController.add(ConnectionStatus.live);
-      // On reconnect we push a fresh snapshot rather than replay whatever
-      // ticks were "missed" while down — see README for rationale.
-      _emitFreshSnapshot();
-      _startTicking();
-    });
+    _reconnectTimer = Timer(delay, _completeReconnect);
+  }
+
+  void _completeReconnect() {
+    _connected = true;
+    _reconnectAttempt = 0;
+    _statusController.add(ConnectionStatus.live);
+    // On reconnect we push a fresh snapshot rather than replay whatever
+    // ticks were "missed" while down — see README for rationale.
+    _emitFreshSnapshot();
+    _startTicking();
+  }
+
+  @override
+  void retryNow() {
+    if (_connected) return;
+    _reconnectTimer?.cancel();
+    _completeReconnect();
   }
 
   @override

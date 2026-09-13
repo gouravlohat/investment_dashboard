@@ -35,6 +35,9 @@ class NoopWebsocketClient implements WebsocketClient {
   void debugKillConnection() {}
 
   @override
+  void retryNow() {}
+
+  @override
   void dispose() {
     _quoteController.close();
     _statusController.close();

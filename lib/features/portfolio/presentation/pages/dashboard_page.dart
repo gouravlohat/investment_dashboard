@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/config/app_config.dart';
+import '../../../../core/network/websocket/connection_status.dart';
 import '../../../../core/utils/breakpoints.dart';
+import '../cubit/connection_cubit.dart';
+import '../cubit/connection_state.dart';
 import '../cubit/portfolio_cubit.dart';
 import '../cubit/portfolio_state.dart';
 import '../widgets/chart/performance_chart.dart';
@@ -28,9 +31,39 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTablet = Breakpoints.isTablet(context);
 
-    return Scaffold(
-      appBar: AppHeader(config: config),
-      body: BlocBuilder<PortfolioCubit, PortfolioState>(
+    return BlocListener<ConnectionCubit, ConnectionUiState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: (context, state) {
+        final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+        switch (state.status) {
+          case ConnectionStatus.offline:
+            messenger.showSnackBar(SnackBar(
+              content: const Text('No internet connection'),
+              duration: const Duration(seconds: 6),
+              action: SnackBarAction(
+                label: 'Retry',
+                onPressed: () => context.read<ConnectionCubit>().retryNow(),
+              ),
+            ));
+          case ConnectionStatus.reconnecting:
+            messenger.showSnackBar(SnackBar(
+              content: const Text('Connection lost — reconnecting…'),
+              duration: const Duration(seconds: 6),
+              action: SnackBarAction(
+                label: 'Retry now',
+                onPressed: () => context.read<ConnectionCubit>().retryNow(),
+              ),
+            ));
+          case ConnectionStatus.live:
+            messenger.showSnackBar(const SnackBar(
+              content: Text('Back online'),
+              duration: Duration(seconds: 2),
+            ));
+        }
+      },
+      child: Scaffold(
+        appBar: AppHeader(config: config),
+        body: BlocBuilder<PortfolioCubit, PortfolioState>(
         buildWhen: (prev, curr) => prev.status != curr.status,
         builder: (context, state) {
           if (state.status == PortfolioStatus.loading) {
@@ -62,7 +95,8 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }

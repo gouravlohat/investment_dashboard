@@ -19,5 +19,7 @@ class StockPriceRemoteDataSource {
 
   void debugKillConnection() => _client.debugKillConnection();
 
+  void retryNow() => _client.retryNow();
+
   void dispose() => _client.dispose();
 }

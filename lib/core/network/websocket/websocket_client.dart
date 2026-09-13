@@ -19,5 +19,10 @@ abstract class WebsocketClient {
   /// exercised without needing airplane mode.
   void debugKillConnection();
 
+  /// User-triggered "retry now" — short-circuits whatever backoff delay is
+  /// currently pending and attempts to reconnect immediately. A no-op if
+  /// already connected.
+  void retryNow();
+
   void dispose();
 }
